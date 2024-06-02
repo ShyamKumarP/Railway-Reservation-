@@ -1,0 +1,245 @@
+import mysql.connector as mysql
+project = mysql.connect(host='localhost', user='root', passwd='', database='rail_db')
+
+if project.is_connected():
+    print("Database is connected.")
+
+else:
+    print("Database is not connected.")
+
+while True:
+    print('''
+    ''')
+    print('''  ***************************************************************************************************************************************''')
+    print('''  **************************************************     WELCOME TO SHYAM RAILWAYS     **************************************************
+                                                          1.Booking Ticket
+                                                          2.Cancellation
+                                                          3.My Status
+                                                          4.Seat Allocation
+                                                          5.Exit/Quit                       ''')
+    print('''  *************************************************************************************************************************************''')
+
+
+    reply = int(input("What you have to do? (1/2/3/4/5) :"))
+    if reply == 1:
+        no_of_pass = int(input("Number of passengers    : "))
+        pass_traveldate = input("Travel Date  YYYY-MM-DD : ")
+        pass_FROM = input("From Station            : ")
+        pass_TO = input("To Station              : ")
+
+
+        mycursor8 = project.cursor()
+        mycursor8.execute("select price_train_number from rail_price_master where price_from_station= '%s' and price_to_station= '%s'"
+                          %(pass_FROM,pass_TO))
+        myresult = mycursor8.fetchall()
+        #print(myresult)
+        mycursor8.close()
+        pass_trainnumber = myresult[0][0]
+        print("Train number            :", pass_trainnumber)
+
+
+        cursor2 = project.cursor()
+        cursor2.execute("SELECT MAX(Pass_TicketNumber) FROM  rail_passenger")
+        record = cursor2.fetchone()
+        TICKET_NUMBER = int(record[0])
+        pass_ticketnumber = TICKET_NUMBER + 1
+        print("Ticket Number           :", pass_ticketnumber)
+        cursor2.close()
+
+
+        cursor2 = project.cursor()
+        cursor2.execute("SELECT MAX(Pass_SrNo) FROM  rail_passenger")
+        record = cursor2.fetchone()
+        Sr_no = int(record[0])
+        pass_srno = Sr_no
+        cursor2.close()
+
+
+        sql_Query = "SELECT price_distance FROM rail_price_master WHERE price_train_number = %s AND price_from_station=%s AND price_to_station=%s"
+        id = (pass_trainnumber, pass_FROM, pass_TO)
+        cursor4 = project.cursor()
+        cursor4.execute(sql_Query, id)
+        record = cursor4.fetchone()
+        DIST = float(record[0])
+        # 1000 - default fare per km
+        VFARE = (50 + 2 * DIST) * no_of_pass
+        #print("TOTAL FARE: ", VFARE)
+        cursor4.close()
+
+        for a in range(0, no_of_pass):
+            pass_srno = pass_srno + 1
+            print("")
+            print('''Provide the details of Passenger ''', a + 1)
+            pass_name = input("Passenger name          : ")
+            pass_gender = input("Gender  M/F             : ")
+
+                                                                                             #traveldate is not happeing    #pass_Journeydate
+            sqlform = "insert into rail_passenger(pass_srno,pass_srname,Pass_Gender,Pass_FromStation,Pass_ToStation,Pass_TrainNumber" \
+                      ",Pass_fare,PASS_TICKETNUMBER,pass_Journeydate) values (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            rail_passenger = [(pass_srno, pass_name, pass_gender, pass_FROM, pass_TO, pass_trainnumber, VFARE,pass_ticketnumber,pass_traveldate)]
+            cursor = project.cursor()                                                                                    # pass_traveldate
+            cursor.executemany(sqlform, rail_passenger)
+            project.commit()
+            cursor.close()
+
+        print()
+        mycursor3 = project.cursor()
+         # id = (pass_ticketnumber)
+        mycursor3.execute("select * from rail_passenger where PASS_TICKETNUMBER=%s " % pass_ticketnumber)
+        myresult = mycursor3.fetchall()
+        for row in myresult:
+            print(row)
+        mycursor3.close()
+        print("TOTAL FARE: ", VFARE)
+
+        print()
+        print("To Go Back to Home Page")
+        a=input("press   ENTER")
+
+
+    elif reply == 2:
+        pass_ticketnumber = input("Enter the Ticket Number: ")
+        print("Details of the ticket which you are cancelling ")
+
+        mycursor8 = project.cursor()
+        mycursor8.execute("select * from rail_passenger where PASS_TICKETNUMBER=%s " % pass_ticketnumber)
+        myresult = mycursor8.fetchall()
+        mycursor8.close()
+        for row in myresult:
+            print(row)
+
+        sure = input("Are you confirm(Y/N) : ")
+        sure = sure.lower()
+        if sure == "y":
+            mycursor7 = project.cursor()
+            mycursor7.execute("DELETE from rail_passenger where PASS_TICKETNUMBER=%s " % pass_ticketnumber)
+            project.commit()
+            mycursor7.close()
+            print()
+            print("""            Ticket cancelling.....            """)
+            print("""            Ticket cancelled successfully            """)
+        else:
+            print("""            Cancellation stopped            """)
+
+        print()
+        print("To Go Back to Home Page")
+        a=input("press   ENTER")
+
+
+    elif reply == 3:
+        pass_ticketnumber = input("Enter the Ticket Number  : ")
+        print("""Loading our details....        """)
+        print()
+        mycursor5 = project.cursor()
+        mycursor5.execute("SELECT * from rail_passenger where PASS_TICKETNUMBER=%s " % pass_ticketnumber)
+        myresult = mycursor5.fetchall()
+        mycursor5.close()
+
+        print("Train number:",myresult[0][5])
+        print("From station:",myresult[0][3])
+        print("To station:",myresult[0][4])
+        print("Journey date:",myresult[0][10])
+        print("Number of passenger:",len(myresult))
+        print("Ticket number:", myresult[0][6])
+
+        for row in myresult:
+            print()
+            #print(row)
+            #print("Ticket number:",row[6])
+            print("Name:",row[1])
+            print("Gender:",row[2])
+            print("Coach number:",row[12])
+            print("Seat number:",row[7])
+
+        print()
+        print("To Go Back to Home Page")
+        input("press   ENTER")
+
+    elif reply == 4:
+        #pass_trainnumber = 5000
+        #print("Train number:", pass_trainnumber)
+        pass_trainnumber=input("Train number: ")
+       # pass_traveldate = "2021-09-01"
+        pass_traveldate = input("Travel Date  YYYY-MM-DD : ")
+        print()
+        print("processing for Train number ",pass_trainnumber,"schedule on",pass_traveldate)
+        print()
+
+        mycursor9 = project.cursor()
+        mycursor9.execute("select * from rail_passenger where Pass_TrainNumber=%s and Pass_JourneyDate ='%s' order by Pass_SrNo "
+                          % (pass_trainnumber,pass_traveldate))
+        myresult1 = mycursor9.fetchall()
+        mycursor9.close
+        v_no = 1
+        v_berthno1 = 1
+        v_berthno2 = 1
+        v_berthno3 = 1
+        #print(myresult1)
+        for row in myresult1:
+            mycursor10 = project.cursor()
+            row1 = list(row)
+            v_srno = row1[0]
+            mycursor10.execute("update  rail_passenger set Pass_Confirm = %s where Pass_TrainNumber =%s and Pass_JourneyDate ='%s'"
+                               " and Pass_SrNo =%s"% (v_no, pass_trainnumber, pass_traveldate, v_srno))
+            project.commit()
+            # v_no=v_no+1
+
+            print(v_srno, v_no, pass_trainnumber, pass_traveldate)
+            mycursor11 = project.cursor()
+            if v_no < 11:
+
+                mycursor11.execute("update  rail_passenger set Pass_CoachCode = '%s' ,Pass_BerthNumber = %s "
+                                   "where Pass_TrainNumber =%s and Pass_JourneyDate ='%s' and Pass_SrNo =%s"
+                                   % ('S1', v_berthno1, pass_trainnumber, pass_traveldate, v_srno))
+                v_berthno1 = v_berthno1 + 1
+                project.commit()
+
+            elif v_no < 21:
+                mycursor11.execute("update  rail_passenger set Pass_CoachCode = '%s' ,Pass_BerthNumber = %s "
+                                   "where Pass_TrainNumber =%s and Pass_JourneyDate ='%s' and Pass_SrNo =%s"
+                                   % ('S2', v_berthno2, pass_trainnumber, pass_traveldate, v_srno))
+                v_berthno2 = v_berthno2 + 1
+                project.commit()
+            else:
+                mycursor11.execute("update  rail_passenger set Pass_CoachCode = '%s' ,Pass_BerthNumber = %s "
+                                   "where Pass_TrainNumber =%s and Pass_JourneyDate ='%s' and Pass_SrNo =%s"
+                                   % ('WL', v_berthno3, pass_trainnumber, pass_traveldate, v_srno))
+                v_berthno3 = v_berthno3 + 1
+                project.commit()
+
+            v_no = v_no + 1
+
+        print()
+        print("To Go Back to Home Page")
+        a=input("press   ENTER")
+
+    elif reply == 5:
+        print("Thanks for visiting our site")
+        break
+
+    else:
+        print("Error### ")
+        print("Plz check the entered number")
+        print()
+        print("To Go Back to Home Page")
+        a=input("press   ENTER")
+
+
+#print()
+#print("To Go Back to Home Page")
+#print("press   ENTER")
+
+#CREATE DATABASE RAILWAY_DB;
+#CREATE TABLE RAILWAY_DB. RAIL_PASSENGER ( PASS_SRNO INT(5), PASS_SRNAME VARCHAR(20), PASS_GENDER VARCHAR(1) , PASS_FROMSTATION VARCHAR(20),PASS_TOSTATION VARCHAR(20), PASS_TRAINNUMBER INT(5),PASS_TICKETNUMBER INT(10), PASS_BERTHNUMBER INT(4),PASS_CONFIRM INT(5),PASS_FARE INT(10) ,PASS_JOURNEYDATE DATE, PASS_ENTRYDATE DATETIME ,PASS_COACHCODE VARCHAR(3));
+#CREATE TABLE RAILWAY_DB. RAIL_PRICE_MASTER ( PRICE_TRAIN_NUMBER INT(5),PRICE_FROM_STATION VARCHAR(20),PRICE_TO_STATION VARCHAR(20),PRICE_FARE INT(20),PRICE_DISTANCE INT(5), PRICE_PK INT(11) PRIMARY KEY);
+#INSERT INTO RAIL_PASSENGER(PASS_SRNO,PASS_TICKETNUMBER) VALUES(0,7076354216)
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(5000,'PANVEL','KALYAN',0,36,1);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(6000,'PANVEL','NASHIK',0,172,2);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(7000,'PANVEL','JHANSI',0,1065,3);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(8000,'PANVEL','KOTA',0,1054,4);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(9000,'PANVEL','DELHI',0,1435,5);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(5000,'KALYAN','PANVEL',0,36,6);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(6000,'NASHIK','PANVEL',0,172,7);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(7000,'JHANSI','PANVEL',0,1065,8);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(8000,'KOTA','PANVEL',0,1054,9);
+#INSERT INTO RAIL_PRICE_MASTER (PRICE_TRAIN_NUMBER,PRICE_FROM_STATION,PRICE_TO_STATION,PRICE_FARE,PRICE_DISTANCE,PRICE_PK) VALUES(9000,'DELHI','PANVEL',0,1436,10)
