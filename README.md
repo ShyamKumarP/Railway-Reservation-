@@ -1,49 +1,105 @@
-Project Title:
-Railway Reservation System using Python and MySQL
+# Railway Reservation System using Python and MySQL
 
-1. Objective:
-To develop a basic Command-Line Interface (CLI) based Railway Reservation System that facilitates ticket booking, cancellation, checking ticket status, and seat allocation.
+## Objective
+To develop a command-line based Railway Reservation System that facilitates ticket booking, cancellation, checking ticket status, and seat allocation using a structured MySQL database backend.
 
-2. Technologies Used:
-Python
+---
 
-MySQL
+## Technologies Used
+- Python  
+- MySQL  
+- MySQL Connector (Python Library)
 
-MySQL Connector (Python Library)
+---
 
-3. Modules Implemented:
-a) Ticket Booking:
-Inputs: Number of passengers, travel date, source station, destination station, passenger names and genders.
+## Features / Modules
 
-Fetches the train number and distance from the rail_price_master table.
+### 1. Booking Ticket
+- Input: Number of passengers, travel date, source and destination stations, passenger details.
+- Retrieves train number and distance from `rail_price_master`.
+- Calculates fare using the formula:  
+  `Fare = (50 + 2 × distance) × number_of_passengers`
+- Auto-generates a unique ticket number.
+- Inserts passenger records into the `rail_passenger` table.
+- Displays booking details and total fare.
 
-Calculates fare using a custom formula:
-Fare = (50 + 2 × distance) × number_of_passengers
+### 2. Cancellation
+- Input: Ticket number.
+- Displays the details associated with the ticket.
+- Deletes records from the `rail_passenger` table after confirmation.
 
-Generates a unique ticket number using the max from previous entries.
+### 3. My Status
+- Input: Ticket number.
+- Displays:
+  - Train number
+  - From and To stations
+  - Journey date
+  - Number of passengers
+  - Passenger names, genders, coach, and seat numbers
 
-Inserts each passenger record into the rail_passenger table.
+### 4. Seat Allocation
+- Input: Train number and travel date.
+- Confirms and assigns seats to passengers:
+  - S1 Coach: First 10 passengers
+  - S2 Coach: Next 10 passengers
+  - WL (Waitlist): Remaining passengers
+- Updates the passenger record with coach and berth number.
 
-Displays the booked details.
+### 5. Exit
+- Gracefully exits the program.
 
-b) Ticket Cancellation:
-Input: Ticket number.
+---
 
-Fetches and displays ticket details for confirmation.
+## Database Schema
 
-Deletes all records with the given ticket number from the rail_passenger table after user confirmation.
+### Table: `rail_passenger`
+Stores individual passenger details.
 
-c) Ticket Status (My Status):
-Input: Ticket number.
+| Field              | Description            |
+|-------------------|------------------------|
+| pass_srno         | Serial number          |
+| pass_srname       | Passenger name         |
+| pass_gender       | Gender (M/F)           |
+| pass_fromstation  | Boarding station       |
+| pass_tostation    | Destination station    |
+| pass_trainnumber  | Train number           |
+| pass_ticketnumber | Ticket number          |
+| pass_berthnumber  | Seat number            |
+| pass_confirm      | Confirmation status    |
+| pass_fare         | Calculated fare        |
+| pass_journeydate  | Date of journey        |
+| pass_entrydate    | Timestamp of booking   |
+| pass_coachcode    | Coach (S1, S2, WL)     |
 
-Displays journey details including train number, route, date, passenger count, names, coach, and seat numbers.
+---
 
-d) Seat Allocation:
-Inputs: Train number and travel date.
+### Table: `rail_price_master`
+Stores fare and distance between station pairs.
 
-Assigns confirmed seats in coaches S1, S2 (up to 20 passengers), and WL for waitlisted passengers.
+| Field               | Description            |
+|--------------------|------------------------|
+| price_train_number | Train number           |
+| price_from_station | From station           |
+| price_to_station   | To station             |
+| price_fare         | Base fare (unused)     |
+| price_distance     | Distance in KM         |
+| price_pk           | Primary key            |
 
-Updates Pass_CoachCode, Pass_BerthNumber, and Pass_Confirm fields in the database.
+---
 
-e) Exit:
-Cleanly exits the CLI program.
+## Future Scope
+- Implement user login and role-based access (Admin/Passenger).
+- Convert CLI interface to GUI (Tkinter) or Web App (Flask/Django).
+- Real-time seat availability and dynamic scheduling.
+- Class-based pricing and flexible fare calculation.
+- Integration with email or SMS services for ticket confirmation.
+- Admin dashboard for analytics, passenger records, and train management.
+
+---
+
+## How to Run
+1. Ensure MySQL server is running and the database `rail_db` is created.
+2. Import the required tables and insert initial records as per schema.
+3. Install Python and `mysql-connector-python` package:
+   ```bash
+   pip install mysql-connector-python
